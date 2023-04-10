@@ -7,19 +7,12 @@
 
 using namespace std;
 
-int precedence(char sym);
-node* treeMaking(queue2 Queue);
-void printTree(node*cur, int layer);
-void postfix(node *currentNode);
-void prefix(node *cur);
-void infix(node *current);
-
 struct stackNode {
 
   node *head = NULL;
   //inserts node into the stack
-  void push(node *node) {
-    node *newnode = new node(node);
+  void push(node *node2) {
+    node *newnode = new node(node2);
     if (head == NULL) {
       head = newnode;
       return;
@@ -55,6 +48,7 @@ struct queue{
   
   void enqueue(char symbol){
     node *user =  new node(symbol);//create node for the symbol;
+    user->next = NULL;
     if(head == NULL){
       head = user;
       tail = head;
@@ -62,7 +56,7 @@ struct queue{
     }
     tail->next = user;//the node after the tail should be the new node
     tail = user;//the latest symbol added should be the tail
-  };
+  }
   char dequeue(){
     if(tail == NULL){
       cout<<"put in an equation!!"<<endl;
@@ -73,8 +67,8 @@ struct queue{
     tail = tail->previous;
     tail->next  = NULL;
     return tempQ->numOrSym;
-  };
-  void dequeueDel(){
+  }
+  /*void dequeueDel(){
     if(tail == NULL){
       cout<<"put in an equation!!"<<endl;
       return;
@@ -84,13 +78,13 @@ struct queue{
     tail = tail->previous;
     tail->next  = NULL;
     delete tempQ;
-  };
+  }*/
   char peek() {
     if (head == NULL) {
       return '\0';
     }
     return head->numOrSym;
-  };
+  }
   void display() {
     node *cur = head;
     while (cur != NULL) {
@@ -98,7 +92,7 @@ struct queue{
       cur = cur->next;
     }
     cout << "done"<<endl;
-  };
+  }
 
 };
 
@@ -112,7 +106,7 @@ struct stack{
     }
     userNode->next = headS;//set the next of the pointer to head
     headS = userNode;// set the head node to user because it is a stack
-  };
+  }
   char pop(){
     if(headS = NULL){//checking if there is anything to delete
       cout<<"There are no numbers here"<<endl;
@@ -124,14 +118,14 @@ struct stack{
       headS = headS->next;
       return tempS->numOrSym;
     }
-  };
+  }
   char peek(){
     if(headS == NULL){
       cout<<"nothing to print"<<endl;
       return '\0';
     }
-    headS->numOrSym;
-  };
+    return headS->numOrSym;
+  }
   void display(){
     if(headS == NULL){
       cout<<"Enter an equation first"<<endl;
@@ -144,8 +138,15 @@ struct stack{
       printer = printer->next;
     }
     cout<<"done printing"<<endl;
-  };
+  }
 };
+
+int precedence(char sym);
+node* treeMaking(queue Queue);
+void printTree(node*cur, int layer);
+void postfix(node *currentNode);
+void prefix(node *cur);
+void infix(node *current);
 
 
 int main(){
@@ -182,13 +183,13 @@ int main(){
        else{
 	char head2 = stack2.peek();
 	int maths = precedence(head2);
-	while (head2!='\0'&&head2!='('&&(maths>dominance||(maths==dominance && input != '^'))){//other math symbols
+	while (head2!='\0'&&head2!='('&&(maths>dominance||(maths==dominance && maths != '^'))){//other math symbols
 	  stack2.pop();
-	  queue2.enqueue(top);
-	  head2 = operators.peek();
+	  queue2.enqueue(head2);
+	  head2 = stack2.peek();
 	  maths = precedence(head2);
 	}
-	stack2.push(input);
+	stack2.push(maths);
     }
   }
  
@@ -245,13 +246,15 @@ int precedence(char sym) {//I chose to use a number system to rank the precednec
   
 }
 
-node* treeMaking(queue2 Queue){
+node* treeMaking(queue Queue){
   char sym = Queue.peek();//make the sym equal to the top of the queue 
   stackNode nodeStack;
+  node *give;
   while(sym != '\0'){
     if(isdigit(sym)){//digit
       node *Tnode = new node(sym);
       nodeStack.push(Tnode);
+      give = Tnode;
     }
     else{//operator
       node *rightChild = nodeStack.peek();
@@ -260,10 +263,12 @@ node* treeMaking(queue2 Queue){
       nodeStack.pop();//remove the node after it's been given to the leftchild
       node *noding = new node(leftChild, rightChild, sym);
       nodeStack.push(noding);
+      give = noding;
     }
-    queue.dequeueDel();
-    sym = queue.peek();
+    Queue.dequeue();
+    sym = Queue.peek();
   }
+  return give;  
 }
 
 void printTree(node*cur, int layer){
@@ -289,14 +294,14 @@ void postfix(node *currentNode){//using psuedo-code
   }
   postfix(currentNode->left);
   postfix(currentNode->right);
-  cout<<postfix->numOrSym;
+  cout<<currentNode->numOrSym;
 }
 
 void prefix(node *cur){
   if(cur == NULL){
     return;
   }
-  cout<<prefix->numOrSym;
+  cout<<cur->numOrSym;
   prefix(cur->left);
   prefix(cur->right);
 }
