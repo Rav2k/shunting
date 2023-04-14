@@ -7,6 +7,8 @@
 
 using namespace std;
 
+int precedence(char sym);
+
 struct stackNode {
 
   node *head = NULL;
@@ -43,15 +45,14 @@ struct stackNode {
 };
 
 struct queue{
-  node *head = NULL;
+  node *headQ = NULL;
   node *tail = NULL;
   
   void enqueue(char symbol){
     node *user =  new node(symbol);//create node for the symbol;
-    user->next = NULL;
-    if(head == NULL){
-      head = user;
-      tail = head;
+    if(headQ == NULL){
+      headQ = user;
+      tail = headQ;
       return;
     }
     tail->next = user;//the node after the tail should be the new node
@@ -63,40 +64,28 @@ struct queue{
       return 'e';//'e' for empty
     }
     node *tempQ;
-    tempQ = tail;
-    tail = tail->previous;
-    tail->next  = NULL;
+    tempQ = headQ;
+    headQ = headQ->next;
     return tempQ->numOrSym;
   }
-  /*void dequeueDel(){
-    if(tail == NULL){
-      cout<<"put in an equation!!"<<endl;
-      return;
-    }
-    node *tempQ;
-    tempQ = tail;
-    tail = tail->previous;
-    tail->next  = NULL;
-    delete tempQ;
-  }*/
   char peek() {
-    if (head == NULL) {
+    if (headQ == NULL) {
       return '\0';
     }
-    return head->numOrSym;
+    return headQ->numOrSym;
   }
   void display() {
-    node *cur = head;
+    node *cur = headQ;
     while (cur != NULL) {
       cout << cur->numOrSym;
       cur = cur->next;
     }
-    cout << "done"<<endl;
   }
 
 };
 
 struct stack{
+  
   node *headS = NULL;
   void push(char numVal){
     node *userNode =  new node(numVal);//create node for the number
@@ -107,32 +96,27 @@ struct stack{
     userNode->next = headS;//set the next of the pointer to head
     headS = userNode;// set the head node to user because it is a stack
   }
-  char pop(){
-    if(headS = NULL){//checking if there is anything to delete
+  void pop(){
+    if(headS == NULL){//checking if there is anything to delete
       cout<<"There are no numbers here"<<endl;
-      return'\0';
+      return;
     }
     else{//if there is then make a temp node and delete that node and replace the head node with the next node from
-      node *tempS;
-      tempS = headS;
+      node *temp;
+      temp = headS;
       headS = headS->next;
-      return tempS->numOrSym;
+      delete temp;
+      //return temp->numOrSym;
     }
   }
   char peek(){
     if(headS == NULL){
-      cout<<"nothing to print"<<endl;
       return '\0';
     }
     return headS->numOrSym;
   }
-  void display(){
-    if(headS == NULL){
-      cout<<"Enter an equation first"<<endl;
-      return;
-    }
-    node *printer;
-    printer = headS;
+  void display(){//looping through and printing out the stack
+    node *printer = headS;
     while(printer != NULL){
       cout<<printer->numOrSym;
       printer = printer->next;
@@ -141,7 +125,7 @@ struct stack{
   }
 };
 
-int precedence(char sym);
+
 node* treeMaking(queue Queue);
 void printTree(node*cur, int layer);
 void postfix(node *currentNode);
@@ -156,11 +140,13 @@ int main(){
   queue queue2;
   cout<<"enter equation(don't add spaces )"<<endl;
   cin.get(equation, 40);
+  cin.get();
+  
   for(int i = 0; i<strlen(equation);i++){
-    if(equation[i] == ' '){
+    if(equation[i] == ' '){//if there is a space ignore it
       //ignore
     }
-    else if(isdigit(equation[i]) == 1){
+    else if(isdigit(equation[i]) == 1){//is there is a digit then push it into the queue
       queue2.enqueue(equation[i]);
     }
     else{
@@ -189,7 +175,7 @@ int main(){
 	  head2 = stack2.peek();
 	  maths = precedence(head2);
 	}
-	stack2.push(maths);
+	stack2.push(data);
     }
   }
  
@@ -200,23 +186,24 @@ int main(){
   }
 
   char *userInput = new char[20];
-  
-  queue2.display();
-
+  cout<<"Content in postfix: "<<endl;
+  cout<<endl;
+  queue2.display();//displays the queue in postfix notation
   node *root = treeMaking(queue2);
-
+  cout<<endl;
+  cout<<"Tree: "<<endl;
   printTree(root, 0);
-
+  cout<<endl;
   cout<<"Choose one, 'infix', 'postfix', or 'prefix': "<<endl;
   cin.getline(userInput, 20);
 
-  if(strcmp(userInput, "infix") == 0){
+  if(strcmp(userInput, "infix") == 0){//infix notation
     infix(root);
   }
-  else if(strcmp(userInput, "postfix") == 0){
+  else if(strcmp(userInput, "postfix") == 0){//postfix notation
     postfix(root);
   }
-  else if(strcmp(userInput,"prefix") == 0){
+  else if(strcmp(userInput,"prefix") == 0){//prefix notation
     prefix(root);
   }
   else{
@@ -240,7 +227,7 @@ int precedence(char sym) {//I chose to use a number system to rank the precednec
   else if (sym == '(' || sym == ')') {//greatest precedence
     return 4;
   }
-  else {
+  else {//invaild output
     return 0;
   }
   
@@ -249,12 +236,10 @@ int precedence(char sym) {//I chose to use a number system to rank the precednec
 node* treeMaking(queue Queue){
   char sym = Queue.peek();//make the sym equal to the top of the queue 
   stackNode nodeStack;
-  node *give;
   while(sym != '\0'){
     if(isdigit(sym)){//digit
       node *Tnode = new node(sym);
       nodeStack.push(Tnode);
-      give = Tnode;
     }
     else{//operator
       node *rightChild = nodeStack.peek();
@@ -263,12 +248,13 @@ node* treeMaking(queue Queue){
       nodeStack.pop();//remove the node after it's been given to the leftchild
       node *noding = new node(leftChild, rightChild, sym);
       nodeStack.push(noding);
-      give = noding;
     }
     Queue.dequeue();
     sym = Queue.peek();
   }
-  return give;  
+  //after this is done the root of the tree will be left so return that
+  node * rootTree = nodeStack.peek();
+  return rootTree;
 }
 
 void printTree(node*cur, int layer){
@@ -276,15 +262,14 @@ void printTree(node*cur, int layer){
     return;
   }
 
-  printTree(cur->right, layer +1);
+  printTree(cur->right, layer+1);
   
   for(int i =0; i<layer;i++){
     cout<<"    ";
   }
   cout<<cur->numOrSym;
 
-  printTree(cur->left, layer +1);
-
+  printTree(cur->left, layer+1);
   
 }
 
@@ -310,8 +295,8 @@ void infix(node *current){
   if(current == NULL){
     return;
   }
-  infix(current->right);
-  cout<<current->numOrSym;
   infix(current->left);
+  cout<<current->numOrSym;
+  infix(current->right);
 }
 
